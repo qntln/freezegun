@@ -118,13 +118,13 @@ FreezeGun is able to handle function and generator objects.
 ``tick`` argument
 ~~~~~~~~~~~~~~~~~
 
-FreezeGun has an additional ``tick`` argument which will restart time at the given
-value, but then time will keep ticking. This is alternative to the default
+FreezeGun has an additional ``ticking_speed`` argument which will restart time at the given
+value, but then time will keep ticking at predefined speed. This is alternative to the default
 parameters which will keep time stopped.
 
 .. code-block:: python
 
-    @freeze_time("Jan 14th, 2020", tick=True)
+    @freeze_time("Jan 14th, 2020", ticking_speed=1.0)
     def test_nice_datetime():
         assert datetime.datetime.now() > datetime.datetime(2020, 1, 14)
 
