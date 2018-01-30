@@ -292,12 +292,18 @@ def _parse_time_to_freeze(time_to_freeze_str):
 
 class TickingDateTimeFactory(object):
 
-    def __init__(self, time_to_freeze, start):
+    def __init__(self, time_to_freeze, start, ticking_speed = 1.0):
         self.time_to_freeze = time_to_freeze
         self.start = start
+        self.speed = ticking_speed
 
     def __call__(self):
-        return self.time_to_freeze + (real_datetime.now() - self.start)
+        return self.time_to_freeze + (real_datetime.now() - self.start) * self.speed
+
+    def move_to(self, target_datetime):
+        target_datetime = _parse_time_to_freeze(target_datetime)
+        self.time_to_freeze = target_datetime
+        self.start = real_datetime.now()
 
 
 class FrozenDateTimeFactory(object):
@@ -323,12 +329,12 @@ class FrozenDateTimeFactory(object):
 
 class _freeze_time(object):
 
-    def __init__(self, time_to_freeze_str, tz_offset, ignore, tick):
+    def __init__(self, time_to_freeze_str, tz_offset, ignore, ticking_speed):
 
         self.time_to_freeze = _parse_time_to_freeze(time_to_freeze_str)
         self.tz_offset = tz_offset
         self.ignore = tuple(ignore)
-        self.tick = tick
+        self.ticking_speed = ticking_speed
         self.undo_changes = []
         self.modules_at_start = set()
 
@@ -391,8 +397,8 @@ class _freeze_time(object):
         self.stop()
 
     def start(self):
-        if self.tick:
-            time_to_freeze = TickingDateTimeFactory(self.time_to_freeze, real_datetime.now())
+        if self.ticking_speed:
+            time_to_freeze = TickingDateTimeFactory(self.time_to_freeze, real_datetime.now(), self.ticking_speed)
         else:
             time_to_freeze = FrozenDateTimeFactory(self.time_to_freeze)
 
@@ -539,7 +545,7 @@ class _freeze_time(object):
         return wrapper
 
 
-def freeze_time(time_to_freeze=None, tz_offset=0, ignore=None, tick=False):
+def freeze_time(time_to_freeze=None, tz_offset=0, ignore=None, ticking_speed=0.0):
     # Python3 doesn't have basestring, but it does have str.
     try:
         string_type = basestring
@@ -550,14 +556,14 @@ def freeze_time(time_to_freeze=None, tz_offset=0, ignore=None, tick=False):
         types.FunctionType, types.GeneratorType)):
         raise TypeError(('freeze_time() expected None, a string, date instance, datetime '
                          'instance, function or a generator, but got type {0}.').format(type(time_to_freeze)))
-    if tick and not _is_cpython:
+    if ticking_speed and not _is_cpython:
         raise SystemError('Calling freeze_time with tick=True is only compatible with CPython')
 
     if isinstance(time_to_freeze, types.FunctionType):
-        return freeze_time(time_to_freeze(), tz_offset, ignore, tick)
+        return freeze_time(time_to_freeze(), tz_offset, ignore, ticking_speed)
 
     if isinstance(time_to_freeze, types.GeneratorType):
-        return freeze_time(next(time_to_freeze), tz_offset, ignore, tick)
+        return freeze_time(next(time_to_freeze), tz_offset, ignore, ticking_speed)
 
     if ignore is None:
         ignore = []
@@ -565,7 +571,7 @@ def freeze_time(time_to_freeze=None, tz_offset=0, ignore=None, tick=False):
     ignore.append('django.utils.six.moves')
     ignore.append('threading')
     ignore.append('Queue')
-    return _freeze_time(time_to_freeze, tz_offset, ignore, tick)
+    return _freeze_time(time_to_freeze, tz_offset, ignore, ticking_speed)
 
 
 # Setup adapters for sqlite
