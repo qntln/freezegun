@@ -11,10 +11,14 @@ else:
     # Py3k
     requires += ['python-dateutil>=2.0']
 
+with open('README.rst') as f:
+    readme = f.read()
+
 setup(
     name='freezegun',
     version='0.5.0',
     description='Let your Python tests travel through time',
+    long_desciption=readme,
     author='Steve Pulec',
     author_email='spulec@gmail.com',
     url='https://github.com/spulec/freezegun',
@@ -29,5 +33,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.6',
     ],
 )
